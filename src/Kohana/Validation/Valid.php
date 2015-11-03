@@ -1,4 +1,4 @@
-<?php defined('SYSPATH') OR die('No direct script access.');
+<?php namespace Kohana\Validation;
 /**
  * Validation rules.
  *
@@ -8,16 +8,28 @@
  * @copyright  (c) 2008-2012 Kohana Team
  * @license    http://kohanaframework.org/license
  */
-class Kohana_Valid {
+class Valid {
+	
+	protected static $credit_cards = [
+		'default'          => ['length' => '13,14,15,16,17,18,19','prefix' => '',                        'luhn' => TRUE],
+		'american express' => ['length' => '15',                  'prefix' => '3[47]',                   'luhn' => TRUE],
+		'diners club'      => ['length' => '14,16',               'prefix' => '36|55|30[0-5]',           'luhn' => TRUE],
+		'discover'         => ['length' => '16',                  'prefix' => '6(?:5|011)',              'luhn' => TRUE],
+		'jcb'              => ['length' => '15,16',               'prefix' => '3|1800|2131',             'luhn' => TRUE],
+		'maestro'          => ['length' => '16,18',               'prefix' => '50(?:20|38)|6(?:304|759)','luhn' => TRUE],
+		'mastercard'       => ['length' => '16',                  'prefix' => '5[1-5]',                  'luhn' => TRUE],
+		'visa'             => ['length' => '13,16',               'prefix' => '4',                       'luhn' => TRUE],
+	];
 
 	/**
 	 * Checks if a field is not empty.
 	 *
+	 * @param   mixed $value
 	 * @return  boolean
 	 */
 	public static function not_empty($value)
 	{
-		if (is_object($value) AND $value instanceof ArrayObject)
+		if (is_object($value) AND $value instanceof \ArrayObject)
 		{
 			// Get the array from the ArrayObject
 			$value = $value->getArrayCopy();
@@ -48,7 +60,7 @@ class Kohana_Valid {
 	 */
 	public static function min_length($value, $length)
 	{
-		return UTF8::strlen($value) >= $length;
+		return strlen($value) >= $length;
 	}
 
 	/**
@@ -60,7 +72,7 @@ class Kohana_Valid {
 	 */
 	public static function max_length($value, $length)
 	{
-		return UTF8::strlen($value) <= $length;
+		return strlen($value) <= $length;
 	}
 
 	/**
@@ -76,13 +88,13 @@ class Kohana_Valid {
 		{
 			foreach ($length as $strlen)
 			{
-				if (UTF8::strlen($value) === $strlen)
+				if (strlen($value) === $strlen)
 					return TRUE;
 			}
 			return FALSE;
 		}
 
-		return UTF8::strlen($value) === $length;
+		return strlen($value) === $length;
 	}
 
 	/**
@@ -109,10 +121,8 @@ class Kohana_Valid {
 	 */
 	public static function email($email, $strict = FALSE)
 	{
-		if (UTF8::strlen($email) > 254)
-		{
+		if (strlen($email) > 254)
 			return FALSE;
-		}
 
 		if ($strict === TRUE)
 		{
@@ -267,7 +277,7 @@ class Kohana_Valid {
 			return FALSE;
 		}
 
-		$cards = Kohana::$config->load('credit_cards');
+		$cards = self::$credit_cards;
 
 		// Check card type
 		$type = strtolower($type);
@@ -321,7 +331,7 @@ class Kohana_Valid {
 		for ($i = $length - 1; $i >= 0; $i -= 2)
 		{
 			// Add up every 2nd digit, starting from the right
-			$checksum += substr($number, $i, 1);
+			$checksum += (int) substr($number, $i, 1);
 		}
 
 		for ($i = $length - 2; $i >= 0; $i -= 2)
@@ -330,7 +340,7 @@ class Kohana_Valid {
 			$double = substr($number, $i, 1) * 2;
 
 			// Subtract 9 from the double where value is greater than 10
-			$checksum += ($double >= 10) ? ($double - 9) : $double;
+			$checksum += (int) (($double >= 10) ? ($double - 9) : $double);
 		}
 
 		// If the checksum is a multiple of 10, the number is valid
